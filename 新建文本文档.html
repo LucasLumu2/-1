@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片分区点击播放音频</title>
+    <style>
+        /* 包裹三张图片的容器 */
+       .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        img {
+            width: 12cm;
+            cursor: pointer;
+            margin: 0 10px; /* 设置图片之间的间距 */
+        }
+
+        /* 语速调节样式 */
+       .speed-control {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 语速调节区域 -->
+    <div class="speed-control">
+        <label for="speed-range">语速调节: </label>
+        <input type="range" id="speed-range" min="0.5" max="2" step="0.1" value="1">
+        <span id="speed-value">1.0</span>
+    </div>
+
+    <!-- 图片容器 -->
+    <div class="image-container">
+        <img src="0001.jpg" alt="Image 1">
+        <img src="0002.jpg" alt="Image 2">
+        <img src="0003.jpg" alt="Image 3">
+    </div>
+
+    <!-- 图片 0001 对应的音频 -->
+    <audio id="audio-0001-1" src="0001-1.mp3"></audio>
+    <audio id="audio-0001-2" src="0001-2.mp3"></audio>
+    <audio id="audio-0001-3" src="0001-3.mp3"></audio>
+    <audio id="audio-0001-4" src="0001-4.mp3"></audio>
+    <!-- 图片 0002 对应的音频 -->
+    <audio id="audio-0002-1" src="0002-1.mp3"></audio>
+    <audio id="audio-0002-2" src="0002-2.mp3"></audio>
+    <audio id="audio-0002-3" src="0002-3.mp3"></audio>
+    <audio id="audio-0002-4" src="0002-4.mp3"></audio>
+    <!-- 图片 0003 对应的音频 -->
+    <audio id="audio-0003-1" src="0003-1.mp3"></audio>
+    <audio id="audio-0003-2" src="0003-2.mp3"></audio>
+    <audio id="audio-0003-3" src="0003-3.mp3"></audio>
+    <audio id="audio-0003-4" src="0003-4.mp3"></audio>
+
+    <script>
+        const images = document.querySelectorAll('img');
+        const speedRange = document.getElementById('speed-range');
+        const speedValue = document.getElementById('speed-value');
+
+        let currentPlayingAudio;
+
+        // 获取所有音频元素
+        const audios = document.querySelectorAll('audio');
+        // 为每个音频元素添加自定义属性来存储播放位置
+        audios.forEach(audio => {
+            audio.dataset.prevTime = 0;
+            audio.dataset.draggedTime = 0;
+        });
+
+        // 语速调节
+        speedRange.addEventListener('input', () => {
+            const speed = parseFloat(speedRange.value);
+            speedValue.textContent = speed.toFixed(1);
+            audios.forEach(audio => {
+                audio.playbackRate = speed;
+            });
+        });
+
+        // 点击图片处理函数
+        images.forEach(img => {
+            img.addEventListener('click', function (e) {
+                const rect = this.getBoundingClientRect();
+                const isLeft = e.clientX - rect.left < rect.width / 2;
+                const isTop = e.clientY - rect.top < rect.height / 2;
+
+                let targetAudio;
+                const imgIndex = Array.from(images).indexOf(this) + 1;
+                if (isLeft && isTop) {
+                    targetAudio = document.getElementById(`audio-000${imgIndex}-1`);
+                } else if (!isLeft && isTop) {
+                    targetAudio = document.getElementById(`audio-000${imgIndex}-2`);
+                } else if (isLeft && !isTop) {
+                    targetAudio = document.getElementById(`audio-000${imgIndex}-3`);
+                } else {
+                    targetAudio = document.getElementById(`audio-000${imgIndex}-4`);
+                }
+
+                if (currentPlayingAudio && currentPlayingAudio!== targetAudio) {
+                    currentPlayingAudio.dataset.prevTime = currentPlayingAudio.dataset.draggedTime? currentPlayingAudio.dataset.draggedTime : currentPlayingAudio.currentTime;
+                    currentPlayingAudio.pause();
+                }
+
+                if (targetAudio.paused) {
+                    targetAudio.currentTime = targetAudio.dataset.draggedTime? targetAudio.dataset.draggedTime : parseFloat(targetAudio.dataset.prevTime);
+                    targetAudio.play().catch(error => {
+                        console.error(`播放音频出错:`, error);
+                    });
+                    currentPlayingAudio = targetAudio;
+                } else {
+                    targetAudio.pause();
+                    targetAudio.dataset.prevTime = targetAudio.dataset.draggedTime? targetAudio.dataset.draggedTime : targetAudio.currentTime;
+                    currentPlayingAudio = null;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
